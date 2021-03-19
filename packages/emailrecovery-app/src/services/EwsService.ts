@@ -1,7 +1,6 @@
-﻿import { format } from "@fluentui/utilities";
+import { format } from "@fluentui/utilities";
 import { default as $ } from "jquery";
-import { Strings } from "../Strings";
-import { IProgressService } from "./ProgressService";
+import { IFolder } from "./IFolder";
 
 /**
  * Various constants related to EWS and XML parsing
@@ -22,17 +21,17 @@ class EwsRequestTemplates {
   static findItemRequest =
     '<?xml version="1.0" encoding="utf-8"?>' +
     `<soap:Envelope xmlns:m="${Constants.messages}" xmlns:t="${Constants.types}" xmlns:soap="${Constants.soap}">` +
-    "<soap:Header>" +
+    '<soap:Header>' +
     `<t:RequestServerVersion Version="${Constants.exchangeVersion}" />` +
-    "</soap:Header>" +
-    "<soap:Body>" +
+    '</soap:Header>' +
+    '<soap:Body>' +
     '<m:FindItem Traversal="Shallow">' +
-    "<m:ItemShape>" +
-    "<t:BaseShape>IdOnly</t:BaseShape>" +
-    "<t:AdditionalProperties>" +
+    '<m:ItemShape>' +
+    '<t:BaseShape>IdOnly</t:BaseShape>' +
+    '<t:AdditionalProperties>' +
     '<t:ExtendedFieldURI PropertyTag="0x348a" PropertyType="Binary" />' +
     '<t:FieldURI FieldURI="item:ItemClass" />' +
-    //'<t:FieldURI FieldURI="item:DateTimeReceived" />' +
+    //"<t:FieldURI FieldURI="item:DateTimeReceived" />" +
     "</t:AdditionalProperties>" +
     "</m:ItemShape>" +
     '<m:IndexedPageItemView MaxEntriesReturned="{0}" Offset="{1}" BasePoint="Beginning" />' +
@@ -77,7 +76,7 @@ class EwsRequestTemplates {
     "</m:ToFolderId>" +
     "<m:ItemIds>" +
     "{1}" +
-    //'<t:ItemId Id="AAMkAGM2OTc0MWE1LWU3ZmMtNGU3ZC1hNTUxLTU5ZDgyMTE0N2RmMQBGAAAAAABU/uPTQj8USZOiHoxSMgyHBwAw7pbBrDnFRZGSmD5m8LGJAAAJcFqPAABx2V1KEKToSItD85dL1W0eAAKdPsPKAAA=" />' +
+    //"<t:ItemId Id="AAMkAGM2OTc0MWE1LWU3ZmMtNGU3ZC1hNTUxLTU5ZDgyMTE0N2RmMQBGAAAAAABU/uPTQj8USZOiHoxSMgyHBwAw7pbBrDnFRZGSmD5m8LGJAAAJcFqPAABx2V1KEKToSItD85dL1W0eAAKdPsPKAAA=" />" +
     "</m:ItemIds>" +
     "<m:ReturnNewItemIds>true</m:ReturnNewItemIds>" +
     "</m:CopyItem>" +
@@ -117,14 +116,6 @@ export class EmailMessage {
   itemClass: string = "";
 }
 
-export class Folder {
-  folderId: string = "";
-  folderPath: string = "";
-  shortFolderId: string = "";
-  entryId: string = "";
-  distinguishedFolderId: string = "";
-}
-
 export class EwsResponse {
   responseClass: string = "";
   responseCode: string = "";
@@ -149,7 +140,7 @@ export class CopyItemResponse extends EwsResponse {
 }
 
 export class FindFolderResponse extends FindResponse {
-  folders: Folder[] = [];
+  folders: IFolder[] = [];
 }
 
 export class XmlParseException extends Error {
@@ -220,7 +211,7 @@ export interface IEwsService {
   /**
    * Find subfolders of a parent
    * @param rootFolderId the root folder id
-   * @param traversal the traversal type: 'Deep' or 'Shallow'
+   * @param traversal the traversal type: "Deep" or "Shallow"
    * @param maxEntries the maximum number of entries to return
    * @param pagingOffset the paging offset
    */
@@ -236,6 +227,12 @@ export interface IEwsService {
  * A service for communicating with Exchange Web Services
  */
 export class EwsService implements IEwsService {
+
+  /**
+   * A default instance of the EWS service
+   */
+  public static Default: IEwsService = new EwsService();
+
   /**
    * Finds items in a folder using EWS
    * @param distinguishedFolderId the distinguished folder id
@@ -336,13 +333,13 @@ export class EwsService implements IEwsService {
   /**
    * Find subfolders of a parent
    * @param rootFolderId the root folder id
-   * @param traversal the traversal type: 'Deep' or 'Shallow'
+   * @param traversal the traversal type: "Deep" or "Shallow"
    * @param maxEntries the maximum number of entries to return
    * @param pagingOffset the paging offset
    */
   findFolderAsync(
     rootFolderId: string,
-    traversal: string, // 'Deep' or 'Shallow'
+    traversal: string, // "Deep" or "Shallow"
     maxEntries: number,
     pagingOffset: number
   ): Promise<FindFolderResponse> {
@@ -367,280 +364,6 @@ export class EwsService implements IEwsService {
         null
       );
     });
-  }
-}
-
-/**
- * Encapsulates the folder hierarchy for a mailbox.
- */
-export class FolderHierarchy {
-  folders: Folder[] = [];
-  private static pageSize = 50;
-  private pagingOffset = 0;
-
-  private shortFolderIdIndex: { [shortFolderId: string]: Folder } = {};
-  private distinguishedFolderIdIndex: {
-    [distinguishedFolderId: string]: Folder;
-  } = {};
-
-  /**
-   * Initializes a new instance of the FolderHierarchy class.
-   * @param ewsService the EWS service implementation
-   */
-  constructor(private ewsService: IEwsService) {}
-
-  /**
-   * Initializes the folder hierarchy
-   */
-  initialize(): Promise<void> {
-    var that = this;
-    return this.ewsService
-      .findFolderAsync(
-        "root",
-        "Deep",
-        FolderHierarchy.pageSize,
-        this.pagingOffset
-      )
-      .then((result) => {
-        for (var i = 0; i < result.folders.length; i++) {
-          var folder = result.folders[i];
-
-          // Add and index the folder
-          that.folders.push(folder);
-          that.shortFolderIdIndex[folder.shortFolderId] = folder;
-
-          if (folder.distinguishedFolderId) {
-            that.distinguishedFolderIdIndex[
-              folder.distinguishedFolderId
-            ] = folder;
-          }
-        }
-
-        // Capture the new paging offset
-        that.pagingOffset = result.indexedPagingOffset;
-
-        if (!result.includesLastItemInRange) {
-          return that.initialize();
-        }
-
-        // ReSharper disable once NotAllPathsReturnValue
-        // Promise returns recursive chained sometimes, nothing other times
-      });
-  }
-
-  /**
-   * Checks whether the given folder short id is located under the IPM subtree
-   * @param shortFolderId the short folder ID
-   */
-  isFromIpmSubtree(shortFolderId: string) {
-    if (shortFolderId == null || shortFolderId === "") {
-      return true;
-    }
-
-    var folderInQuestion = this.shortFolderIdIndex[shortFolderId];
-
-    // For messages where we can't find the original folder, we have to assume true
-    if (!folderInQuestion) {
-      return true;
-    }
-
-    var ipmRoot = this.distinguishedFolderIdIndex["msgfolderroot"];
-
-    // If the folder in question starts with the same path as the IPM root, it's IPM
-    if (folderInQuestion.folderPath.indexOf(ipmRoot.folderPath) === 0) {
-      return true;
-    }
-
-    return false;
-  }
-
-  /**
-   * Checks whether the given short folder ID is a subfolder of Contacts
-   * @param shortFolderId the short folder ID
-   */
-  isContactsSubfolder(shortFolderId: string) {
-    if (shortFolderId == null || shortFolderId === "") {
-      return false;
-    }
-
-    var folderInQuestion = this.shortFolderIdIndex[shortFolderId];
-
-    // For messages where we can't find the original folder, we have to that it's not a subfolder of contacts
-    if (!folderInQuestion) {
-      return false;
-    }
-
-    var contacts = this.distinguishedFolderIdIndex["contacts"];
-
-    if (folderInQuestion.folderPath.indexOf(contacts.folderPath + "/") === 0) {
-      return true;
-    }
-
-    return false;
-  }
-}
-
-/**
- * Copies items from one folder to another
- */
-export class ItemCopier {
-  private itemIdsToCopy: string[] = [];
-  private badBatches: string[][] = [];
-  private badItems: string[] = [];
-
-  private discoveryComplete: boolean = false;
-  private discoveryOffset = 0;
-
-  private discoveryError: string = "";
-
-  /**
-   * Initializes a new instance of the ItemCopier class.
-   * @param ewsService the EWS service implementation
-   * @param folderHierarchy the folder hierarchy
-   * @param progress the progress reporting implementation
-   * @param sourceFolderId the source folder ID
-   * @param targetFolderId the target folder ID
-   * @param batchSize the initial batch size for discovery and copy
-   */
-  constructor(
-    private ewsService: IEwsService,
-    private folderHierarchy: FolderHierarchy,
-    private progress: IProgressService,
-    private sourceFolderId: string,
-    private targetFolderId: string,
-    private batchSize: number
-  ) {}
-
-  /**
-   * Starts the folder copy processing
-   */
-  process(): Promise<boolean> {
-    var that = this;
-
-    return that
-      .startDiscoveryPass()
-      .then(() => {
-        if (
-          (that.discoveryComplete || that.discoveryError != null) &&
-          that.itemIdsToCopy.length === 0
-        ) {
-          return true;
-        }
-
-        if (that.itemIdsToCopy.length === 0) {
-          return false;
-        }
-
-        return that.startCopyPass();
-      })
-      .then((done) => {
-        that.progress.reportProgress(
-          Strings.recoveryInProgressMessage,
-          "Pass completed"
-        );
-        return done;
-      });
-  }
-
-  private processFindItemResponse(response: FindItemResponse): void {
-    if (response.responseClass !== "Success") {
-      throw new DiscoveryError(`Discovery Error: ${response.responseCode}`);
-    }
-
-    // Add the discovered items
-    for (var i = 0; i < response.messages.length; i++) {
-      var message = response.messages[i];
-
-      if (message.itemClass === "IPM.File.Document") {
-        continue;
-      }
-
-      // Filter out items we don't want
-      if (!this.folderHierarchy.isFromIpmSubtree(message.lastActiveFolderId)) {
-        continue;
-      }
-
-      if (
-        this.folderHierarchy.isContactsSubfolder(message.lastActiveFolderId)
-      ) {
-        continue;
-      }
-
-      // Add the item to the list
-      this.itemIdsToCopy.push(message.itemId);
-    }
-
-    this.discoveryOffset = response.indexedPagingOffset;
-
-    if (response.includesLastItemInRange) {
-      this.discoveryComplete = true;
-    }
-  }
-
-  private processCopyItemReponse(response: CopyItemResponse): void {
-    if (response.responseClass !== "Success") {
-      // TODO: where to log errors?
-      if (console != null) {
-        console.error("Bad item detected");
-      }
-
-      throw new CopyError(`CopyError: ${response.responseCode}`);
-    }
-  }
-
-  private startDiscoveryPass(): Promise<void> {
-    var that = this;
-
-    that.progress.reportProgress(
-      Strings.recoveryInProgressMessage,
-      "Discovering Items"
-    );
-
-    return this.ewsService
-      .findItemAsync(this.sourceFolderId, this.batchSize, this.discoveryOffset)
-      .then((resp) => {
-        that.progress.reportProgress(
-          Strings.recoveryInProgressMessage,
-          "Processing Items"
-        );
-        return that.processFindItemResponse(resp);
-      });
-  }
-
-  private handleCopyError(attemptedIds: string[], error: CopyError) {
-    if (attemptedIds.length > 1) {
-      var half = attemptedIds.splice(0, Math.floor(attemptedIds.length / 2));
-      this.badBatches.push(half);
-      this.badBatches.push(attemptedIds);
-    } else {
-      this.badItems.push(attemptedIds[0]);
-    }
-  }
-
-  private startCopyPass(): Promise<boolean> {
-    var that = this;
-
-    // Remove the itemids from the front of the copy list
-    var chunkItemIds = that.itemIdsToCopy.splice(0, that.batchSize);
-    that.progress.reportProgress(
-      Strings.recoveryInProgressMessage,
-      `Copying ${chunkItemIds.length} Items`
-    );
-
-    return that.ewsService
-      .copyItemsAsync(chunkItemIds, that.targetFolderId)
-      .then((resp) => {
-        that.processCopyItemReponse(resp);
-        that.progress.reportProgress(
-          Strings.recoveryInProgressMessage,
-          "Copy pass complete"
-        );
-        return false;
-      })
-      .catch((error) => {
-        that.handleCopyError(chunkItemIds, error);
-        return false;
-      });
   }
 }
 
@@ -890,7 +613,14 @@ class Parser {
         /// TODO: Type-guard
         var folderElem = foldersElem.childNodes[i] as Element;
 
-        var folder = new Folder();
+        var folder: IFolder = {
+          folderId: "",
+          distinguishedFolderId: "",
+          entryId: "",
+          folderPath: "",
+          shortFolderId: ""
+        };
+
         var folderIdElem = Parser.findChildElementSingle(
           folderElem,
           Constants.types,
@@ -953,11 +683,15 @@ class Parser {
   ): Element {
     var messages = parent.getElementsByTagNameNS(namespace, localName);
     if (messages.length === 0) {
-      throw new XmlParseException(`Failed to find ${namespace}/${localName} in XML response`);
+      throw new XmlParseException(
+        `Failed to find ${namespace}/${localName} in XML response`
+      );
     }
 
     if (messages.length > 1) {
-      throw new XmlParseException(`Found multiple items matching ${namespace}/${localName} in XML response`);
+      throw new XmlParseException(
+        `Found multiple items matching ${namespace}/${localName} in XML response`
+      );
     }
 
     return messages[0];
