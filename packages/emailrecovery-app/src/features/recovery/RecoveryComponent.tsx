@@ -76,6 +76,7 @@ const FolderNameComponent: React.FC = () => {
       isOpen={isFolderDialogOpen}
       isBlocking={true}
       containerClassName={contentStyles.container}
+      styles={{ root: { alignItems: "flex-start", paddingTop: 14 }}}
     >
       <div className={contentStyles.header}>
         <span id={titleId}>Folder name</span>

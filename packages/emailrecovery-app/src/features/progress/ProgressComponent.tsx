@@ -57,6 +57,7 @@ export const ProgressComponent: React.FC = () => {
       isOpen={active}
       isBlocking={true}
       containerClassName={contentStyles.container}
+      styles={{ root: { alignItems: "flex-start", paddingTop: 14 }}}
     >
       <div className={contentStyles.header}>
         <span id={titleId}>Please wait.</span>
