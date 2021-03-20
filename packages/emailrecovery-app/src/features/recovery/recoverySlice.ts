@@ -11,11 +11,17 @@ import { reportProgress, reportComplete } from "../progress/progressSlice";
 interface IRecoveryState {
   folders: IFolder[];
   errorMessage: string;
+  sourceFolder: string;
+  folderName: string;
+  isFolderDialogOpen: boolean;
 }
 
 const initialState: IRecoveryState = {
   folders: [],
   errorMessage: "",
+  sourceFolder: "recoverableitemsdeletions",
+  folderName: "",
+  isFolderDialogOpen: false,
 };
 
 export const recoverySlice = createSlice({
@@ -28,10 +34,19 @@ export const recoverySlice = createSlice({
     setError: (state, action: PayloadAction<string>) => {
       state.errorMessage = action.payload;
     },
+    setFolderName: (state, action: PayloadAction<string>) => {
+      state.folderName = action.payload;
+    },
+    setFolderDialogOpen: (state, action: PayloadAction<boolean>) => {
+      state.isFolderDialogOpen = action.payload;
+    },
+    setSourceFolder: (state, action: PayloadAction<string>) => {
+      state.sourceFolder = action.payload;
+    }
   },
 });
 
-export const { setFolders, setError } = recoverySlice.actions;
+export const { setFolders, setError, setFolderName, setFolderDialogOpen, setSourceFolder } = recoverySlice.actions;
 
 export const loadFolderHierarchyAsync = (): AppThunk => async (dispatch) => {
   // TODO: Inject EwsService
@@ -77,20 +92,20 @@ const createFolderAsync = async (folderName: string): Promise<string> => {
   }
 };
 
-export const performRecoveryAsync = (sourceFolder: string): AppThunk => async (
+export const promptForFolderNameAsync = (): AppThunk => async dispatch => {
+  dispatch(setFolderName("Email Recovery " + new Date(Date.now()).toISOString()));
+  dispatch(setFolderDialogOpen(true));
+};
+
+export const performRecoveryAsync = (): AppThunk => async (
   dispatch,
   getState,
   services
 ) => {
   const copyChunkSize = 50;
 
-  // TODO: Inject services
-
-  const folderName =
-    //prompt("Enter a name for target folder") ??
-    "Email Recovery " + new Date(Date.now()).toISOString();
-  if (!folderName) {
-    // They hit cancel
+  const { recovery: { sourceFolder, folderName } } = getState();
+  if (!sourceFolder || !folderName) {
     return;
   }
 
