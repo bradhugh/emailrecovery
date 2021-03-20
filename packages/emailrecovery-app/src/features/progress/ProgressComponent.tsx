@@ -9,6 +9,7 @@ import {
 } from "@fluentui/react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../app/store";
+import { Utils } from "../../Utils";
 
 const theme = getTheme();
 const contentStyles = mergeStyleSets({
@@ -61,7 +62,12 @@ export const ProgressComponent: React.FC = () => {
         <span id={titleId}>Please wait.</span>
       </div>
       <div className={contentStyles.body}>
-        <ProgressIndicator label={activity} description={status} />
+        <div
+          dangerouslySetInnerHTML={{
+            __html: Utils.sanitizeHtmlDefault(activity),
+          }}
+        ></div>
+        <ProgressIndicator description={status} />
       </div>
     </Modal>
   );
