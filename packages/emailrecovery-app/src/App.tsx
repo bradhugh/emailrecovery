@@ -22,7 +22,6 @@ function App() {
       elem.onload = () => {
         Office.initialize = () => {
           waitForMailboxAsync().then(() => setIsLoaded(true));
-          console.log("Mailbox is: ", Office.context.mailbox);
         };
       };
 
