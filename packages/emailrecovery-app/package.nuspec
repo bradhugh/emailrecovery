@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>EmailRecovery</id>
-    <version>0.0.11</version>
+    <version>0.0.12</version>
     <description>Script output of Email Recovery Office Add-in</description>
     <authors>Brad Hughes</authors>
     <repository type="git" url="https://github.com/bradhugh/emailrecovery.git" />
@@ -15,6 +15,7 @@
     <!-- <file src="LICENSE" target="" /> -->
     <file src="README.md" target="" />
     <file src="build\*.*" target="contentFiles/any/any/apps/emailrecovery" />
+    <file src="build\images\*.*" target="contentFiles/any/any/apps/emailrecovery/images" />
     <file src="build\static\js\*.*" target="contentFiles/any/any/apps/emailrecovery/static/js" />
   </files>
 </package>
