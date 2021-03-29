@@ -5,6 +5,7 @@
     <version>0.0.10</version>
     <description>Script output of Email Recovery Office Add-in</description>
     <authors>Brad Hughes</authors>
+    <repository type="git" url="https://github.com/bradhugh/emailrecovery.git" />
     <license type="expression">MIT</license>
     <contentFiles>
       <files include="**/apps/emailrecovery/**/*" buildAction="Content" copyToOutput="true" />
