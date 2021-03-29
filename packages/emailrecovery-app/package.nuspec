@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package>
+  <metadata>
+    <id>EmailRecovery</id>
+    <version>0.0.10</version>
+    <description>Script output of Email Recovery Office Add-in</description>
+    <authors>Brad Hughes</authors>
+    <license type="expression">MIT</license>
+    <contentFiles>
+      <files include="**/apps/emailrecovery/**/*" buildAction="Content" copyToOutput="true" />
+    </contentFiles>
+  </metadata>
+  <files>
+    <!-- <file src="LICENSE" target="" /> -->
+    <file src="README.md" target="" />
+    <file src="build\*.*" target="contentFiles/any/any/apps/emailrecovery" />
+    <file src="build\static\js\*.*" target="contentFiles/any/any/apps/emailrecovery/static/js" />
+  </files>
+</package>
