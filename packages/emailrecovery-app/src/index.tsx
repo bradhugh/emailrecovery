@@ -15,13 +15,13 @@ const RootComponent: React.FC = () => {
       <BrowserRouter>
         <Provider store={store}>
           <Switch>
-            <Route path="/privacy">
+            <Route path={[ "/privacy", "/apps/emailrecovery/privacy" ]}>
               <Privacy />
             </Route>
-            <Route path="/home">
+            <Route path={[ "/home", "/apps/emailrecovery/home" ]}>
               <Home />
             </Route>
-            <Route>
+            <Route path={[ "/", "/apps/emailrecovery" ]}>
               <App />
             </Route>
           </Switch>
