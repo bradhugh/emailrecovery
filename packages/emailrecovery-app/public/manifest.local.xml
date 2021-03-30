@@ -32,7 +32,7 @@
       <DesktopSettings>
         <!-- Change the following line to specify     -->
         <!-- the web server that hosts the HTML file. -->
-        <SourceLocation DefaultValue="https://localhost:3000/images" />
+        <SourceLocation DefaultValue="https://localhost:3000" />
         <RequestedHeight>300</RequestedHeight>
       </DesktopSettings>
     </Form>

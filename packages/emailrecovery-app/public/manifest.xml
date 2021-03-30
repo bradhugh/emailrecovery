@@ -12,9 +12,9 @@
 
   <!-- Change the following line to specify    -->
   <!-- the web server that hosts the icon file. -->
-  <IconUrl DefaultValue="https://localhost:5001/apps/emailrecovery/images/logo.jpg"/>
-  <HighResolutionIconUrl DefaultValue="https://localhost:5001/apps/emailrecovery/images/logo-hr.png" />
-  <SupportUrl DefaultValue="https://localhost:5001/apps/emailrecovery/home"/>
+  <IconUrl DefaultValue="https://hughesofficeapp.azurewebsites.net/apps/emailrecovery/images/logo.jpg"/>
+  <HighResolutionIconUrl DefaultValue="https://hughesofficeapp.azurewebsites.net/apps/emailrecovery/images/logo-hr.png" />
+  <SupportUrl DefaultValue="https://hughesofficeapp.azurewebsites.net/apps/emailrecovery/home"/>
 
   <Hosts>
     <Host Name="Mailbox" />
@@ -32,7 +32,7 @@
       <DesktopSettings>
         <!-- Change the following line to specify     -->
         <!-- the web server that hosts the HTML file. -->
-        <SourceLocation DefaultValue="https://localhost:5001/apps/emailrecovery" />
+        <SourceLocation DefaultValue="https://hughesofficeapp.azurewebsites.net/apps/emailrecovery" />
         <RequestedHeight>300</RequestedHeight>
       </DesktopSettings>
     </Form>
@@ -85,13 +85,13 @@
     <Resources>
       <bt:Images>
         <!-- Ribbon icon -->
-        <bt:Image id="ribbon-icon-16" DefaultValue="https://localhost:5001/apps/emailrecovery/images/ribbon-16.png"/>
-        <bt:Image id="ribbon-icon-32" DefaultValue="https://localhost:5001/apps/emailrecovery/images/ribbon-32.png"/>
-        <bt:Image id="ribbon-icon-80" DefaultValue="https://localhost:5001/apps/emailrecovery/images/ribbon-80.png"/>
+        <bt:Image id="ribbon-icon-16" DefaultValue="https://hughesofficeapp.azurewebsites.net/apps/emailrecovery/images/ribbon-16.png"/>
+        <bt:Image id="ribbon-icon-32" DefaultValue="https://hughesofficeapp.azurewebsites.net/apps/emailrecovery/images/ribbon-32.png"/>
+        <bt:Image id="ribbon-icon-80" DefaultValue="https://hughesofficeapp.azurewebsites.net/apps/emailrecovery/images/ribbon-80.png"/>
       </bt:Images>
       <bt:Urls>
-        <bt:Url id="customPaneUrl" DefaultValue="https://localhost:5001/apps/emailrecovery/desktop" />
-        <bt:Url id="readTaskPaneUrl" DefaultValue="https://localhost:5001/apps/emailrecovery/taskpane" />
+        <bt:Url id="customPaneUrl" DefaultValue="https://hughesofficeapp.azurewebsites.net/apps/emailrecovery/desktop" />
+        <bt:Url id="readTaskPaneUrl" DefaultValue="https://hughesofficeapp.azurewebsites.net/apps/emailrecovery/taskpane" />
       </bt:Urls>
       <bt:ShortStrings>
         <bt:String id="groupLabel" DefaultValue="Email Recovery"/>
