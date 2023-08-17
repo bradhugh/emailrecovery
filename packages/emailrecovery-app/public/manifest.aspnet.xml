@@ -14,7 +14,7 @@
   <!-- the web server that hosts the icon file. -->
   <IconUrl DefaultValue="https://localhost:5001/apps/emailrecovery/images/logo.jpg"/>
   <HighResolutionIconUrl DefaultValue="https://localhost:5001/apps/emailrecovery/images/logo-hr.png" />
-  <SupportUrl DefaultValue="https://localhost:5001/apps/emailrecovery/home"/>
+  <SupportUrl DefaultValue="https://localhost:5001/apps/emailrecovery/info.html"/>
 
   <Hosts>
     <Host Name="Mailbox" />

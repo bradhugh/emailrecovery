@@ -14,7 +14,7 @@
   <!-- the web server that hosts the icon file. -->
   <IconUrl DefaultValue="https://localhost:3000/images/logo.jpg"/>
   <HighResolutionIconUrl DefaultValue="https://localhost:3000/images/logo-hr.png" />
-  <SupportUrl DefaultValue="https://localhost:3000/home"/>
+  <SupportUrl DefaultValue="https://localhost:3000/info.html"/>
 
   <Hosts>
     <Host Name="Mailbox" />
