@@ -10,7 +10,7 @@
     {
       "src": "images/logo.jpg",
       "type": "image/jpeg",
-      "sizes": "96x96"
+      "sizes": "64x64"
     },
     {
       "src": "images/logo-hr.png",
