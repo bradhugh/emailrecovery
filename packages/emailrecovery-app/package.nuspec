@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>EmailRecovery</id>
-    <version>0.0.19</version>
+    <version>0.0.20</version>
     <description>Script output of Email Recovery Office Add-in</description>
     <authors>Brad Hughes</authors>
     <repository type="git" url="https://github.com/bradhugh/emailrecovery.git" />
