@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { AppThunk } from "../../app/store";
-import { EwsService } from "../../services/EwsService";
+import { ExchangeServiceFactory } from "../../services/EwsService";
 import { FolderHierarchy } from "../../services/FolderHierarchy";
 import { IFolder } from "../../services/IFolder";
 import { ItemCopier } from "../../services/ItemCopier";
@@ -50,7 +50,7 @@ export const { setFolders, setError, setFolderName, setFolderDialogOpen, setSour
 
 export const loadFolderHierarchyAsync = (): AppThunk => async (dispatch) => {
   // TODO: Inject EwsService
-  const hierarchy = new FolderHierarchy(EwsService.Default);
+  const hierarchy = new FolderHierarchy(ExchangeServiceFactory.service());
 
   dispatch(
     reportProgress({
@@ -81,7 +81,7 @@ export const reportError = (activity: string, error: Error): AppThunk => (
 };
 
 const createFolderAsync = async (folderName: string): Promise<string> => {
-  const res = await EwsService.Default.createFolderAsync(
+  const res = await ExchangeServiceFactory.service().createFolderAsync(
     "msgfolderroot",
     folderName
   );
@@ -130,14 +130,14 @@ export const performRecoveryAsync = (): AppThunk => async (
   }
 
   const { recovery: { folders } } = getState();
-  const hierarchy = new FolderHierarchy(EwsService.Default, folders);
+  const hierarchy = new FolderHierarchy(ExchangeServiceFactory.service(), folders);
 
   const progressCallback = (status: string) => {
     dispatch(reportProgress({ activity: Strings.recoveryInProgress, status }));
   };
 
   const copier = new ItemCopier(
-    EwsService.Default,
+    ExchangeServiceFactory.service(),
     hierarchy,
     progressCallback,
     sourceFolder,

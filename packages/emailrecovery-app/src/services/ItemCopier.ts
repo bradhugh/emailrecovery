@@ -3,8 +3,8 @@ import {
   CopyItemResponse,
   DiscoveryError,
   FindItemResponse,
-  IEwsService,
-} from "./EwsService";
+  IExchangeService,
+} from "./IExchangeService";
 import { FolderHierarchy } from "./FolderHierarchy";
 
 /**
@@ -30,7 +30,7 @@ export class ItemCopier {
    * @param batchSize the initial batch size for discovery and copy
    */
   constructor(
-    private ewsService: IEwsService,
+    private ewsService: IExchangeService,
     private folderHierarchy: FolderHierarchy,
     private reportStatus: (status: string) => void,
     private sourceFolderId: string,

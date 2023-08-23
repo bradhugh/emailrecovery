@@ -1,5 +1,5 @@
-import { IEwsService } from "./EwsService";
+import { IExchangeService } from "./IExchangeService";
 
 export interface IServices {
-  Ews: IEwsService;
+  Ews: IExchangeService;
 }

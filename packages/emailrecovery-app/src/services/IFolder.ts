@@ -4,5 +4,6 @@ export interface IFolder {
   folderPath: string;
   shortFolderId: string;
   entryId: string;
-  distinguishedFolderId: string;
+  distinguishedFolderId: string | null;
+  childFolderCount: number;
 }

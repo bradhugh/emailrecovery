@@ -1,4 +1,4 @@
-import { IEwsService } from "./EwsService";
+import { FindFolderResponse, IExchangeService } from "./IExchangeService";
 import { IFolder } from "./IFolder";
 
 /**
@@ -6,7 +6,6 @@ import { IFolder } from "./IFolder";
  */
 export class FolderHierarchy {
   private static pageSize = 50;
-  private pagingOffset = 0;
 
   private shortFolderIdIndex: { [shortFolderId: string]: IFolder } = {};
   private distinguishedFolderIdIndex: {
@@ -18,7 +17,7 @@ export class FolderHierarchy {
    * @param ewsService the EWS service implementation
    */
   constructor(
-    private ewsService: IEwsService,
+    private ewsService: IExchangeService,
     public folders: IFolder[] = []
   ) {}
 
@@ -26,15 +25,11 @@ export class FolderHierarchy {
    * Initializes the folder hierarchy
    */
   public async initialize(): Promise<void> {
-    const result = await this.ewsService.findFolderAsync(
-      "root",
-      "Deep",
-      FolderHierarchy.pageSize,
-      this.pagingOffset
-    );
+    const folders = await this.getAllChildFoldersRecursive("root");
+    console.log(folders);
 
-    for (var i = 0; i < result.folders.length; i++) {
-      var folder = result.folders[i];
+    for (var i = 0; i < folders.length; i++) {
+      var folder = folders[i];
 
       // Add and index the folder
       this.folders.push(folder);
@@ -43,14 +38,28 @@ export class FolderHierarchy {
       if (folder.distinguishedFolderId) {
         this.distinguishedFolderIdIndex[folder.distinguishedFolderId] = folder;
       }
+    }
+  }
 
-      // Capture the new paging offset
-      this.pagingOffset = result.indexedPagingOffset;
+  private async getAllChildFoldersRecursive(parentId: string): Promise<IFolder[]> {
+    const folders: IFolder[] = [];
+    let offset = 0;
+    let resp: FindFolderResponse;
+    do {
+      resp = await this.ewsService.findFolderAsync(parentId, "Shallow", FolderHierarchy.pageSize, offset);
+      folders.push(...resp.folders);
+      offset += resp.folders.length;
+    } while (!resp?.includesLastItemInRange)
 
-      if (!result.includesLastItemInRange) {
-        return this.initialize();
+    // Process child folders recursively
+    for (const folder of folders) {
+      if (folder.childFolderCount > 0) {
+        const childFolders = await this.getAllChildFoldersRecursive(folder.folderId);
+        folders.push(...childFolders);
       }
     }
+
+    return folders;
   }
 
   /**
@@ -90,7 +99,7 @@ export class FolderHierarchy {
 
     var folderInQuestion = this.shortFolderIdIndex[shortFolderId];
 
-    // For messages where we can"t find the original folder, we have to that it"s not a subfolder of contacts
+    // For messages where we can't find the original folder, we have to that it's not a subfolder of contacts
     if (!folderInQuestion) {
       return false;
     }

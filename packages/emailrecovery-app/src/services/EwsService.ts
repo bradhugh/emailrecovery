@@ -1,6 +1,9 @@
 import { format } from "@fluentui/utilities";
 import { default as $ } from "jquery";
 import { IFolder } from "./IFolder";
+import { CopyItemResponse, CreateFolderResponse, EmailMessage, FindFolderResponse, FindItemResponse, IExchangeService } from "./IExchangeService";
+import { RestService } from "./RestService";
+import { Utils } from "../Utils";
 
 /**
  * Various constants related to EWS and XML parsing
@@ -108,41 +111,6 @@ class EwsRequestTemplates {
     "</soap:Envelope>";
 }
 
-export class EmailMessage {
-  messageType: string = "";
-  itemId: string = "";
-  subject: string = "";
-  lastActiveFolderId: string = "";
-  itemClass: string = "";
-}
-
-export class EwsResponse {
-  responseClass: string = "";
-  responseCode: string = "";
-}
-
-export class FindResponse extends EwsResponse {
-  indexedPagingOffset: number = 0;
-  totalItemsInView: number = 0;
-  includesLastItemInRange: boolean = true;
-}
-
-export class FindItemResponse extends FindResponse {
-  messages: EmailMessage[] = [];
-}
-
-export class CreateFolderResponse extends EwsResponse {
-  folderId: string = "";
-}
-
-export class CopyItemResponse extends EwsResponse {
-  newItemIds: string[] = [];
-}
-
-export class FindFolderResponse extends FindResponse {
-  folders: IFolder[] = [];
-}
-
 export class XmlParseException extends Error {
   constructor(message: string) {
     super(message);
@@ -152,86 +120,46 @@ export class XmlParseException extends Error {
   }
 }
 
-export class DiscoveryError extends Error {
-  constructor(message: string) {
-    super(message);
+export class ExchangeServiceFactory {
 
-    // When extending the built-in Error type, you have to fix up the prototype chain
-    Object.setPrototypeOf(this, new.target.prototype);
+  private static minRestSet: string = "1.5";
+
+  private static _service : IExchangeService;
+
+  public static service() : IExchangeService {
+    if (!ExchangeServiceFactory._service) {
+      ExchangeServiceFactory._service = ExchangeServiceFactory.createExchangeService();
+    }
+
+    return ExchangeServiceFactory._service;
   }
-}
 
-export class CopyError extends Error {
-  constructor(message: string) {
-    super(message);
+  private static canUseAPI(apiType: string, minset: string): boolean {
+    if (typeof (Office) === "undefined") { return false; }
+    if (!Office) { return false; }
+    if (!Office.context) { return false; }
+    if (!Office.context.requirements) { return false; }
+    if (!Office.context.requirements.isSetSupported("Mailbox", minset)) { return false; }
+    if (!Office.context.mailbox) { return false; }
+    if (!Office.context.mailbox.getCallbackTokenAsync) { return false; }
+    return true;
+  }
 
-    // When extending the built-in Error type, you have to fix up the prototype chain
-    Object.setPrototypeOf(this, new.target.prototype);
+  private static canUseRest(): boolean { return ExchangeServiceFactory.canUseAPI("Rest", ExchangeServiceFactory.minRestSet); }
+
+  private static createExchangeService() : IExchangeService {
+    if (ExchangeServiceFactory.canUseRest()) {
+      return new RestService();
+    } else {
+      return new EwsService();
+    }
   }
 }
 
 /**
  * A service for communicating with Exchange Web Services
  */
-export interface IEwsService {
-  /**
-   * Finds items in a folder using EWS
-   * @param distinguishedFolderId the distinguished folder id
-   * @param maxEntries the maximum number of messages to return
-   * @param offset the start offset (used for paging)
-   */
-  findItemAsync(
-    distinguishedFolderId: string,
-    maxEntries: number,
-    offset: number
-  ): Promise<FindItemResponse>;
-
-  /**
-   * Creates a folder using EWS
-   * @param distinguishedParentFolderId the parent folder id
-   * @param displayName the folder display name
-   * @param folderClass the optional folder class (default IPF.Note)
-   */
-  createFolderAsync(
-    distinguishedParentFolderId: string,
-    displayName: string,
-    folderClass?: string
-  ): Promise<CreateFolderResponse>;
-
-  /**
-   * Copies source items to a target folder
-   * @param sourceItemIds the source item ids
-   * @param targetFolderId the target folder id
-   */
-  copyItemsAsync(
-    sourceItemIds: string[],
-    targetFolderId: string
-  ): Promise<CopyItemResponse>;
-
-  /**
-   * Find subfolders of a parent
-   * @param rootFolderId the root folder id
-   * @param traversal the traversal type: "Deep" or "Shallow"
-   * @param maxEntries the maximum number of entries to return
-   * @param pagingOffset the paging offset
-   */
-  findFolderAsync(
-    rootFolderId: string,
-    traversal: string,
-    maxEntries: number,
-    pagingOffset: number
-  ): Promise<FindFolderResponse>;
-}
-
-/**
- * A service for communicating with Exchange Web Services
- */
-export class EwsService implements IEwsService {
-
-  /**
-   * A default instance of the EWS service
-   */
-  public static Default: IEwsService = new EwsService();
+export class EwsService implements IExchangeService {
 
   /**
    * Finds items in a folder using EWS
@@ -413,9 +341,9 @@ class Parser {
     result.indexedPagingOffset = parseInt(
       rootFolder.attr("IndexedPagingOffset") ?? "0"
     );
-    result.totalItemsInView = parseInt(
-      rootFolder.attr("TotalItemsInView") ?? "0"
-    );
+    // result.totalItemsInView = parseInt(
+    //   rootFolder.attr("TotalItemsInView") ?? "0"
+    // );
     result.includesLastItemInRange =
       rootFolder.attr("IncludesLastItemInRange") === "true";
 
@@ -593,9 +521,9 @@ class Parser {
     result.indexedPagingOffset = parseInt(
       rootFolder.attr("IndexedPagingOffset") ?? "0"
     );
-    result.totalItemsInView = parseInt(
-      rootFolder.attr("TotalItemsInView") ?? "0"
-    );
+    // result.totalItemsInView = parseInt(
+    //   rootFolder.attr("TotalItemsInView") ?? "0"
+    // );
     result.includesLastItemInRange =
       rootFolder.attr("IncludesLastItemInRange") === "true";
 
@@ -618,7 +546,8 @@ class Parser {
           distinguishedFolderId: "",
           entryId: "",
           folderPath: "",
-          shortFolderId: ""
+          shortFolderId: "",
+          childFolderCount: 0, // TODO: FIXME
         };
 
         var folderIdElem = Parser.findChildElementSingle(
@@ -666,7 +595,7 @@ class Parser {
         }
 
         // Get our short folder id from the EntryId
-        folder.shortFolderId = Parser.entryIdToShortFolderId(folder.entryId);
+        folder.shortFolderId = Utils.entryIdToShortFolderId(folder.entryId);
 
         // add this to the folder list
         result.folders.push(folder);
@@ -695,13 +624,5 @@ class Parser {
     }
 
     return messages[0];
-  }
-
-  private static entryIdToShortFolderId(ewsId: string): string {
-    var bin = atob(ewsId);
-
-    // We only need bytes 22 to 44 which is DBGuid + GlobalCounter
-    var shortIdBin = bin.substr(22, 22);
-    return btoa(shortIdBin);
   }
 }

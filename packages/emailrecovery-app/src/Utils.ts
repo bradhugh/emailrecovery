@@ -10,4 +10,15 @@ export class Utils {
       allowedTags: [ "strong", "br" ],
     });
   }
+
+  public static entryIdToShortFolderId(entryId: string): string {
+    const bin = atob(entryId);
+    if (bin.length !== 46) {
+      throw new Error(`Invalid EntryId Length ${entryId}. Expected 46 bytes. Actual: ${bin.length}`);
+    }
+
+    // We only need bytes 22 to 44 which is DBGuid + GlobalCounter
+    const shortIdBin = bin.substring(22, 44);
+    return btoa(shortIdBin);
+  }
 }
