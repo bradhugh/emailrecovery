@@ -85,11 +85,8 @@ const createFolderAsync = async (folderName: string): Promise<string> => {
     "msgfolderroot",
     folderName
   );
-  if (res.responseClass === "Success") {
-    return res.folderId;
-  } else {
-    throw new Error(res.responseCode);
-  }
+  
+  return res.folderId;
 };
 
 export const promptForFolderNameAsync = (): AppThunk => async dispatch => {

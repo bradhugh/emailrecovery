@@ -17,15 +17,13 @@ export interface IExchangeService {
   ): Promise<FindItemResponse>;
 
   /**
-   * Creates a folder using EWS
+   * Creates a folder
    * @param distinguishedParentFolderId the parent folder id
    * @param displayName the folder display name
-   * @param folderClass the optional folder class (default IPF.Note)
    */
   createFolderAsync(
     distinguishedParentFolderId: string,
     displayName: string,
-    folderClass?: string
   ): Promise<CreateFolderResponse>;
 
   /**
@@ -53,14 +51,8 @@ export interface IExchangeService {
   ): Promise<FindFolderResponse>;
 }
 
-export class EwsResponse {
-  responseClass: string = "";
-  responseCode: string = "";
-}
-
-export class FindResponse extends EwsResponse {
+export class FindResponse {
   indexedPagingOffset: number = 0;
-  //totalItemsInView: number = 0;
   includesLastItemInRange: boolean = true;
 }
 
@@ -76,11 +68,11 @@ export class FindItemResponse extends FindResponse {
   messages: EmailMessage[] = [];
 }
 
-export class CreateFolderResponse extends EwsResponse {
+export class CreateFolderResponse {
   folderId: string = "";
 }
 
-export class CopyItemResponse extends EwsResponse {
+export class CopyItemResponse {
   newItemIds: string[] = [];
 }
 

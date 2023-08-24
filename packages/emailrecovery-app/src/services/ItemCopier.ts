@@ -1,7 +1,5 @@
 import {
   CopyError,
-  CopyItemResponse,
-  DiscoveryError,
   FindItemResponse,
   IExchangeService,
 } from "./IExchangeService";
@@ -22,7 +20,7 @@ export class ItemCopier {
 
   /**
    * Initializes a new instance of the ItemCopier class.
-   * @param ewsService the EWS service implementation
+   * @param exchangeService the EWS service implementation
    * @param folderHierarchy the folder hierarchy
    * @param reportStatus the progress reporting implementation
    * @param sourceFolderId the source folder ID
@@ -30,7 +28,7 @@ export class ItemCopier {
    * @param batchSize the initial batch size for discovery and copy
    */
   constructor(
-    private ewsService: IExchangeService,
+    private exchangeService: IExchangeService,
     private folderHierarchy: FolderHierarchy,
     private reportStatus: (status: string) => void,
     private sourceFolderId: string,
@@ -64,9 +62,6 @@ export class ItemCopier {
   }
 
   private processFindItemResponse(response: FindItemResponse): void {
-    if (response.responseClass !== "Success") {
-      throw new DiscoveryError(`Discovery Error: ${response.responseCode}`);
-    }
 
     // Add the discovered items
     for (var i = 0; i < response.messages.length; i++) {
@@ -98,25 +93,18 @@ export class ItemCopier {
     }
   }
 
-  private processCopyItemReponse(response: CopyItemResponse): void {
-    if (response.responseClass !== "Success") {
-      // TODO: where to log errors?
-      if (console != null) {
-        console.error("Bad item detected");
-      }
-
-      throw new CopyError(`CopyError: ${response.responseCode}`);
-    }
-  }
-
   private async startDiscoveryPass(): Promise<void> {
 
     this.reportStatus("Discovering Items");
 
-    const resp = await this.ewsService.findItemAsync(this.sourceFolderId, this.batchSize, this.discoveryOffset);
-    this.reportStatus("Processing Items");
+    try {
+      const resp = await this.exchangeService.findItemAsync(this.sourceFolderId, this.batchSize, this.discoveryOffset);
+      this.reportStatus("Processing Items");
 
-    await this.processFindItemResponse(resp);
+      await this.processFindItemResponse(resp);
+    } catch (error) {
+      this.discoveryError = (error as Error)?.message ?? "Unknown error";
+    }
   }
 
   private handleCopyError(attemptedIds: string[], error: CopyError) {
@@ -136,8 +124,7 @@ export class ItemCopier {
     this.reportStatus(`Copying ${chunkItemIds.length} Items`);
 
     try {
-      const resp = await this.ewsService.copyItemsAsync(chunkItemIds, this.targetFolderId);
-      await this.processCopyItemReponse(resp);
+      await this.exchangeService.copyItemsAsync(chunkItemIds, this.targetFolderId);
       this.reportStatus("Copy pass complete");
 
       return true;

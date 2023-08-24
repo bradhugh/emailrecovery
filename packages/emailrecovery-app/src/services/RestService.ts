@@ -61,12 +61,25 @@ export class RestService implements IExchangeService {
     throw new Error("Method not implemented.");
   }
 
+  /**
+   * Creates a folder using REST
+   * @param distinguishedParentFolderId the parent folder id
+   * @param displayName the folder display name
+   */
   public async createFolderAsync(
     distinguishedParentFolderId: string,
-    displayName: string,
-    folderClass?: string | undefined
+    displayName: string
   ): Promise<CreateFolderResponse> {
-    throw new Error("Method not implemented.");
+    const token = await this.getAccessTokenAsync();
+    let url = RestService.getRestUrl(token);
+    url += `/api/v2.0/me/mailFolders/${distinguishedParentFolderId}/childFolders`;
+
+    const folder = await this.ajaxAsync<IRestFolder>(url, token, "POST", {
+      DisplayName: displayName,
+    });
+    const response = new CreateFolderResponse();
+    response.folderId = folder.Id;
+    return response;
   }
 
   public async copyItemsAsync(
@@ -117,8 +130,6 @@ export class RestService implements IExchangeService {
     }
 
     response.includesLastItemInRange = odata.value.length < maxEntries;
-    response.responseClass = ""; // TODO
-    response.responseCode = ""; // TODO
     response.indexedPagingOffset = pagingOffset + odata.value.length;
 
     return response;
@@ -127,7 +138,8 @@ export class RestService implements IExchangeService {
   private async ajaxAsync<TResponse>(
     url: string,
     accessToken: string,
-    method = "GET"
+    method = "GET",
+    data?: object
   ) {
     return new Promise<TResponse>((resolve, reject) => {
       $.ajax({
@@ -135,6 +147,8 @@ export class RestService implements IExchangeService {
         url: url,
         dataType: "json",
         headers: { Authorization: "Bearer " + accessToken },
+        contentType: data ? "application/json" : undefined,
+        data: JSON.stringify(data),
       })
         .done((data) => resolve(data))
         .fail((error) => reject(error));

@@ -198,12 +198,10 @@ export class EwsService implements IExchangeService {
    * Creates a folder using EWS
    * @param distinguishedParentFolderId the parent folder id
    * @param displayName the folder display name
-   * @param folderClass the optional folder class (default IPF.Note)
    */
   createFolderAsync(
     distinguishedParentFolderId: string,
     displayName: string,
-    folderClass: string = "IPF.Note"
   ): Promise<CreateFolderResponse> {
     return new Promise((resolve, reject) => {
       var mailbox = Office.context.mailbox;
@@ -211,7 +209,7 @@ export class EwsService implements IExchangeService {
         format(
           EwsRequestTemplates.createFolderRequest,
           distinguishedParentFolderId,
-          folderClass,
+          "IPF.Note",
           displayName
         ),
         (res) => {
@@ -326,14 +324,18 @@ class Parser {
     );
 
     var result = new FindItemResponse();
-    result.responseClass = $(respElem).attr("ResponseClass") ?? "";
-    result.responseCode = $(
+    const responseClass = $(respElem).attr("ResponseClass") ?? "";
+    const responseCode = $(
       Parser.findChildElementSingle(
         respElem,
         Constants.messages,
         "ResponseCode"
       )
     ).text();
+
+    if (responseClass !== "Success") {
+      throw new Error(responseCode);
+    }
 
     var rootFolder = $(
       Parser.findChildElementSingle(respElem, Constants.messages, "RootFolder")
@@ -419,14 +421,18 @@ class Parser {
     );
 
     var result = new CreateFolderResponse();
-    result.responseClass = $(respElem).attr("ResponseClass") ?? "";
-    result.responseCode = $(
+    const responseClass = $(respElem).attr("ResponseClass") ?? "";
+    const responseCode = $(
       Parser.findChildElementSingle(
         respElem,
         Constants.messages,
         "ResponseCode"
       )
     ).text();
+
+    if (responseClass !== "Success") {
+      throw new Error(responseCode);
+    }
 
     // Since we only currently support creating a single folder, only expect a single folder id
     var folderIdElem = Parser.findChildElementSingle(
@@ -481,9 +487,11 @@ class Parser {
       }
     }
 
+    if (overallResponseClass !== "Success") {
+      throw new Error(overallResponseCode);
+    }
+
     var result = new CopyItemResponse();
-    result.responseClass = overallResponseClass;
-    result.responseCode = overallResponseCode;
 
     result.newItemIds = itemIds;
     return result;
@@ -506,14 +514,18 @@ class Parser {
     );
 
     var result = new FindFolderResponse();
-    result.responseClass = $(respElem).attr("ResponseClass") ?? "";
-    result.responseCode = $(
+    const responseClass = $(respElem).attr("ResponseClass") ?? "";
+    const responseCode = $(
       Parser.findChildElementSingle(
         respElem,
         Constants.messages,
         "ResponseCode"
       )
     ).text();
+
+    if (responseClass !== "Success") {
+      throw new Error(responseCode);
+    }
 
     var rootFolder = $(
       Parser.findChildElementSingle(respElem, Constants.messages, "RootFolder")
