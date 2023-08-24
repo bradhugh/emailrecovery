@@ -57,7 +57,6 @@ export class FindResponse {
 }
 
 export class EmailMessage {
-  messageType: string = "";
   itemId: string = "";
   subject: string = "";
   lastActiveFolderId: string = "";

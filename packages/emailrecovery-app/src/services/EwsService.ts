@@ -362,7 +362,6 @@ class Parser {
         var message = new EmailMessage();
         var itemElem = itemsElem.childNodes[i] as Element;
 
-        message.messageType = itemElem.localName; // Contact, etc.
         message.itemId =
           $(
             Parser.findChildElementSingle(itemElem, Constants.types, "ItemId")

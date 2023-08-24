@@ -13,6 +13,8 @@ export class RestService implements IExchangeService {
   private static PropNames = {
     EntryId: "Binary 0xfff",
     FolderPathFullName: "String 0x6874",
+    MessageClass: "String 0x001a",
+    LastActiveParentFolderId: "Binary 0x348a",
   };
 
   private static getBaseUrl(url: string): string {
@@ -58,7 +60,35 @@ export class RestService implements IExchangeService {
     maxEntries: number,
     offset: number
   ): Promise<FindItemResponse> {
-    throw new Error("Method not implemented.");
+    const token = await this.getAccessTokenAsync();
+    let url = RestService.getRestUrl(token);
+    const fields = "Id,Subject";
+    const extendedPropsFilter = `$filter=PropertyId eq '${RestService.PropNames.MessageClass}' or PropertyId eq '${RestService.PropNames.LastActiveParentFolderId}'`;
+    url += `/api/v2.0/me/mailFolders/${distinguishedFolderId}/messages?$top=${maxEntries}&$skip=${offset}&$select=${fields}&$expand=SingleValueExtendedProperties(${extendedPropsFilter})`;
+
+    const odata = await this.ajaxAsync<IODataResponse<IRestMessage>>(
+      url,
+      token
+    );
+
+    const response = new FindItemResponse();
+    for (const message of odata.value) {
+      const messageClass = message.SingleValueExtendedProperties.find(
+        (prop) => prop.PropertyId === RestService.PropNames.MessageClass
+      )!.Value;
+      const lastActiveParentFolderId = message.SingleValueExtendedProperties.find(
+        (prop) => prop.PropertyId === RestService.PropNames.LastActiveParentFolderId
+      )!.Value;
+
+      response.messages.push({
+        itemId: message.Id,
+        subject: message.Subject,
+        itemClass: messageClass,
+        lastActiveFolderId: lastActiveParentFolderId,
+      });
+    }
+
+    return response;
   }
 
   /**
@@ -186,6 +216,18 @@ interface IRestFolder {
   Id: string;
   WellKnownName: string | null;
   ChildFolderCount: number;
+  SingleValueExtendedProperties: [
+    {
+      PropertyId: string;
+      Value: string;
+    }
+  ];
+}
+
+interface IRestMessage {
+  "@odata.type"?: string;
+  Id: string;
+  Subject: string;
   SingleValueExtendedProperties: [
     {
       PropertyId: string;
