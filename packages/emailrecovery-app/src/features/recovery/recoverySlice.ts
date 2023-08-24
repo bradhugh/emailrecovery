@@ -1,12 +1,12 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { AppThunk } from "../../app/store";
-import { ExchangeServiceFactory } from "../../services/EwsService";
 import { FolderHierarchy } from "../../services/FolderHierarchy";
 import { IFolder } from "../../services/IFolder";
 import { ItemCopier } from "../../services/ItemCopier";
 import { Strings } from "../../Strings";
 import { Utils } from "../../Utils";
 import { reportProgress, reportComplete } from "../progress/progressSlice";
+import { ExchangeServiceFactory } from "../../services/ExchangeServiceFactory";
 
 interface IRecoveryState {
   folders: IFolder[];

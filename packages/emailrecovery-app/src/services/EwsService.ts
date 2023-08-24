@@ -1,8 +1,14 @@
 import { format } from "@fluentui/utilities";
 import { default as $ } from "jquery";
 import { IFolder } from "./IFolder";
-import { CopyItemResponse, CreateFolderResponse, EmailMessage, FindFolderResponse, FindItemResponse, IExchangeService } from "./IExchangeService";
-import { RestService } from "./RestService";
+import {
+  CopyItemResponse,
+  CreateFolderResponse,
+  EmailMessage,
+  FindFolderResponse,
+  FindItemResponse,
+  IExchangeService,
+} from "./IExchangeService";
 import { Utils } from "../Utils";
 
 /**
@@ -24,14 +30,14 @@ class EwsRequestTemplates {
   static findItemRequest =
     '<?xml version="1.0" encoding="utf-8"?>' +
     `<soap:Envelope xmlns:m="${Constants.messages}" xmlns:t="${Constants.types}" xmlns:soap="${Constants.soap}">` +
-    '<soap:Header>' +
+    "<soap:Header>" +
     `<t:RequestServerVersion Version="${Constants.exchangeVersion}" />` +
-    '</soap:Header>' +
-    '<soap:Body>' +
+    "</soap:Header>" +
+    "<soap:Body>" +
     '<m:FindItem Traversal="Shallow">' +
-    '<m:ItemShape>' +
-    '<t:BaseShape>IdOnly</t:BaseShape>' +
-    '<t:AdditionalProperties>' +
+    "<m:ItemShape>" +
+    "<t:BaseShape>IdOnly</t:BaseShape>" +
+    "<t:AdditionalProperties>" +
     '<t:ExtendedFieldURI PropertyTag="0x348a" PropertyType="Binary" />' +
     '<t:FieldURI FieldURI="item:ItemClass" />' +
     //"<t:FieldURI FieldURI="item:DateTimeReceived" />" +
@@ -98,13 +104,14 @@ class EwsRequestTemplates {
     "<t:BaseShape>IdOnly</t:BaseShape>" +
     "<t:AdditionalProperties>" +
     '<t:FieldURI FieldURI="folder:DistinguishedFolderId" />' +
+    '<t:FieldURI FieldURI="folder:ChildFolderCount" />' +
     '<t:ExtendedFieldURI PropertyTag="0x6874" PropertyType="String" />' + // FolderPathFullName
     '<t:ExtendedFieldURI PropertyTag="0x0FFF" PropertyType="Binary" />' + // PR_ENTRYID
     "</t:AdditionalProperties>" +
     "</m:FolderShape>" +
     '<m:IndexedPageFolderView MaxEntriesReturned="{1}" Offset="{2}" BasePoint="Beginning" />' +
     "<m:ParentFolderIds>" +
-    '<t:DistinguishedFolderId Id="{3}"/>' +
+    "{3}" + // <t:DistinguishedFolderId Id="{3}"/> or <t:FolderId Id="{3}" />
     "</m:ParentFolderIds>" +
     "</m:FindFolder>" +
     "</soap:Body>" +
@@ -120,47 +127,10 @@ export class XmlParseException extends Error {
   }
 }
 
-export class ExchangeServiceFactory {
-
-  private static minRestSet: string = "1.5";
-
-  private static _service : IExchangeService;
-
-  public static service() : IExchangeService {
-    if (!ExchangeServiceFactory._service) {
-      ExchangeServiceFactory._service = ExchangeServiceFactory.createExchangeService();
-    }
-
-    return ExchangeServiceFactory._service;
-  }
-
-  private static canUseAPI(apiType: string, minset: string): boolean {
-    if (typeof (Office) === "undefined") { return false; }
-    if (!Office) { return false; }
-    if (!Office.context) { return false; }
-    if (!Office.context.requirements) { return false; }
-    if (!Office.context.requirements.isSetSupported("Mailbox", minset)) { return false; }
-    if (!Office.context.mailbox) { return false; }
-    if (!Office.context.mailbox.getCallbackTokenAsync) { return false; }
-    return true;
-  }
-
-  private static canUseRest(): boolean { return ExchangeServiceFactory.canUseAPI("Rest", ExchangeServiceFactory.minRestSet); }
-
-  private static createExchangeService() : IExchangeService {
-    if (ExchangeServiceFactory.canUseRest()) {
-      return new RestService();
-    } else {
-      return new EwsService();
-    }
-  }
-}
-
 /**
  * A service for communicating with Exchange Web Services
  */
 export class EwsService implements IExchangeService {
-
   /**
    * Finds items in a folder using EWS
    * @param distinguishedFolderId the distinguished folder id
@@ -201,7 +171,7 @@ export class EwsService implements IExchangeService {
    */
   createFolderAsync(
     distinguishedParentFolderId: string,
-    displayName: string,
+    displayName: string
   ): Promise<CreateFolderResponse> {
     return new Promise((resolve, reject) => {
       var mailbox = Office.context.mailbox;
@@ -277,7 +247,9 @@ export class EwsService implements IExchangeService {
           traversal,
           maxEntries,
           pagingOffset,
-          rootFolderId
+          rootFolderId.length < 40
+            ? `<t:DistinguishedFolderId Id="${rootFolderId}"/>`
+            : `<t:FolderId Id="${rootFolderId}" />`
         ),
         (res) => {
           if (res.status === Office.AsyncResultStatus.Succeeded) {
@@ -558,7 +530,7 @@ class Parser {
           entryId: "",
           folderPath: "",
           shortFolderId: "",
-          childFolderCount: 0, // TODO: FIXME
+          childFolderCount: 0,
         };
 
         var folderIdElem = Parser.findChildElementSingle(
@@ -575,6 +547,16 @@ class Parser {
             "DistinguishedFolderId"
           )
         ).text();
+
+        // Get ChildFolderCount
+        folder.childFolderCount = parseInt(
+          $(
+            folderElem.getElementsByTagNameNS(
+              Constants.types,
+              "ChildFolderCount"
+            )
+          ).text() ?? "0"
+        );
 
         // Parse Extended properties
         var extendedProps = folderElem.getElementsByTagNameNS(
