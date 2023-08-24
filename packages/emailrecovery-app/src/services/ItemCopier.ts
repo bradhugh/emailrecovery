@@ -44,7 +44,7 @@ export class ItemCopier {
   public async process(): Promise<boolean> {
     await this.startDiscoveryPass();
     if (
-      (this.discoveryComplete || this.discoveryError != null) &&
+      (this.discoveryComplete || this.discoveryError) &&
       this.itemIdsToCopy.length === 0
     ) {
       return true;

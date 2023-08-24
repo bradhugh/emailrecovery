@@ -13,7 +13,7 @@ export class RestService implements IExchangeService {
   private static PropNames = {
     EntryId: "Binary 0xfff",
     FolderPathFullName: "String 0x6874",
-    MessageClass: "String 0x001a",
+    MessageClass: "String 0x1a",
     LastActiveParentFolderId: "Binary 0x348a",
   };
 
@@ -88,6 +88,11 @@ export class RestService implements IExchangeService {
       });
     }
 
+    response.includesLastItemInRange = odata.value.length < maxEntries;
+    response.indexedPagingOffset = offset + odata.value.length;
+
+    console.log("FindItemResponse", response);
+
     return response;
   }
 
@@ -116,7 +121,28 @@ export class RestService implements IExchangeService {
     sourceItemIds: string[],
     targetFolderId: string
   ): Promise<CopyItemResponse> {
-    throw new Error("Method not implemented.");
+    const response = new CopyItemResponse();
+
+    const token = await this.getAccessTokenAsync();
+    let baseUrl = RestService.getRestUrl(token);
+    
+    // POST https://outlook.office.com/api/v2.0/me/messages/{message_id}/copy
+    // "DestinationId": "inbox"
+    for (const sourceId of sourceItemIds) {
+      const url = `${baseUrl}/api/v2.0/me/messages/${sourceId}/copy`;
+
+      try {
+        const message = await this.ajaxAsync<IRestMessage>(url, token, "POST", {
+          DestinationId: targetFolderId,
+        });
+
+        response.newItemIds.push(message.Id);
+      } catch (error) {
+        // REVIEW: Should we do anything here?
+      }
+    }
+
+    return response;
   }
 
   public async findFolderAsync(
