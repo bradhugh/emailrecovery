@@ -5,6 +5,8 @@ import {
   getTheme,
   IChoiceGroupOption,
   mergeStyleSets,
+  MessageBar,
+  MessageBarType,
   Modal,
   PrimaryButton,
   TextField,
@@ -76,7 +78,7 @@ const FolderNameComponent: React.FC = () => {
       isOpen={isFolderDialogOpen}
       isBlocking={true}
       containerClassName={contentStyles.container}
-      styles={{ root: { alignItems: "flex-start", paddingTop: 14 }}}
+      styles={{ root: { alignItems: "flex-start", paddingTop: 14 } }}
     >
       <div className={contentStyles.header}>
         <span id={titleId}>Folder name</span>
@@ -112,30 +114,38 @@ const FolderNameComponent: React.FC = () => {
   );
 };
 
+var docUrl = "https://support.microsoft.com/office/recover-and-restore-deleted-items-in-outlook-49e81f3c-c8f4-4426-a0b9-c0fd751d48ce";
+var decommDate = new Date(2024, 2, 17);
 export const RecoveryComponent: React.FC = () => {
   const dispatch = useDispatch();
   const { sourceFolder } = useSelector((state: RootState) => state.recovery);
   useEffect(() => void dispatch(loadFolderHierarchyAsync()), [dispatch]);
 
   return (
-    <div style={{ margin: 5 }}>
-      <ChoiceGroup
-        label="Select the folder from which you wish to recover email"
-        options={options}
-        required={true}
-        selectedKey={sourceFolder}
-        onChange={(e, opt) =>
-          opt?.key ? dispatch(setSourceFolder(opt.key)) : null
-        }
-      />
-      <PrimaryButton
-        onClick={() => dispatch(promptForFolderNameAsync())}
-        styles={{ root: { marginTop: 10 } }}
-      >
-        Start Recovery
-      </PrimaryButton>
-      <FolderNameComponent />
-      <ProgressComponent />
-    </div>
+    <>
+      <MessageBar messageBarType={MessageBarType.warning} isMultiline={true}>
+        Email Recovery Add-in is being decommissioned on {decommDate.toLocaleDateString()}. Use the process documented in the 
+        <a href={docUrl} target="_blank" rel="noreferrer">Recover and restore deleted items in Outlook</a> instead.
+      </MessageBar>
+      <div style={{ margin: 5 }}>
+        <ChoiceGroup
+          label="Select the folder from which you wish to recover email"
+          options={options}
+          required={true}
+          selectedKey={sourceFolder}
+          onChange={(e, opt) =>
+            opt?.key ? dispatch(setSourceFolder(opt.key)) : null
+          }
+        />
+        <PrimaryButton
+          onClick={() => dispatch(promptForFolderNameAsync())}
+          styles={{ root: { marginTop: 10 } }}
+        >
+          Start Recovery
+        </PrimaryButton>
+        <FolderNameComponent />
+        <ProgressComponent />
+      </div>
+    </>
   );
 };
