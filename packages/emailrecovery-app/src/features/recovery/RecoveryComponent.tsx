@@ -124,10 +124,10 @@ export const RecoveryComponent: React.FC = () => {
   return (
     <>
       <MessageBar messageBarType={MessageBarType.warning} isMultiline={true}>
-        Email Recovery Add-in is being decommissioned on {decommDate.toLocaleDateString()}. Use the process documented in the 
+        Email Recovery Add-in is now decommissioned as of {decommDate.toLocaleDateString()}. Use the process documented in the 
         <a href={docUrl} target="_blank" rel="noreferrer">Recover and restore deleted items in Outlook</a> instead.
       </MessageBar>
-      <div style={{ margin: 5 }}>
+      {/* <div style={{ margin: 5 }}>
         <ChoiceGroup
           label="Select the folder from which you wish to recover email"
           options={options}
@@ -145,7 +145,7 @@ export const RecoveryComponent: React.FC = () => {
         </PrimaryButton>
         <FolderNameComponent />
         <ProgressComponent />
-      </div>
+      </div> */}
     </>
   );
 };
